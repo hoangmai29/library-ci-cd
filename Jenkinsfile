@@ -34,9 +34,11 @@ pipeline {
         }
 stage('SonarQube Analysis') {
     steps {
-withSonarQubeEnv('SonarQube') {
-    bat 'mvn clean verify sonar:sonar -Dsonar.token=your_generated_token_here'
-}
+        withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+            withSonarQubeEnv('SonarQube') {
+                bat "mvn clean verify sonar:sonar -Dsonar.token=%SONAR_TOKEN%"
+            }
+        }
     }
 }
         stage('Quality Gate') {
