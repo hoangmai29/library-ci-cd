@@ -2,38 +2,76 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven 3.9.6' // Hoặc tên cấu hình Maven bạn đã khai báo trong Jenkins
-        jdk 'JDK 17'         // Hoặc JDK bạn đã setup trong Jenkins
+        maven 'Maven 3.9.6'
+        jdk 'JDK 17'
     }
 
     environment {
-        SONARQUBE = 'SonarQube' // Tên cấu hình SonarQube bạn đã khai trong Jenkins
+        SONARQUBE = 'SonarQube'
+        SSH_CREDENTIALS_ID = 'ssh-key-library-ci-cd'
+        REMOTE_HOST = 'your.server.ip'
+        REMOTE_USER = 'youruser'
+        REMOTE_PATH = '/home/youruser/library-ci-cd'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/hoangmai29/library-ci-cd.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/hoangmai29/library-ci-cd.git']]
+                ])
             }
         }
+
         stage('Build') {
             steps {
-                sh 'echo JAVA_HOME=$JAVA_HOME' // Kiểm tra biến JAVA_HOME có đúng không
-                sh 'java -version'             // Kiểm tra Java đang dùng
-                sh 'mvn clean install'
+                bat 'echo JAVA_HOME=%JAVA_HOME%'
+                bat 'java -version'
+                bat 'mvn clean install'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    sh 'mvn sonar:sonar'
+                    bat 'mvn sonar:sonar'
                 }
             }
         }
+
         stage('Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                bat 'docker build -t library-ci-cd .'
+            }
+        }
+
+        stage('Deploy Local with Docker Compose') {
+            steps {
+                bat 'docker-compose down || exit 0'
+                bat 'docker-compose up -d --build'
+            }
+        }
+
+        stage('Deploy to Remote Server via SSH') {
+            steps {
+                sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
+                    bat """
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} ^ 
+                        "cd ${REMOTE_PATH} && ^ 
+                         git pull origin master && ^ 
+                         docker-compose down || true && ^ 
+                         docker-compose up -d --build"
+                    """
                 }
             }
         }
