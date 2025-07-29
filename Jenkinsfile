@@ -32,15 +32,13 @@ pipeline {
                 bat 'mvn clean install'
             }
         }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    bat 'mvn sonar:sonar'
-                }
-            }
+      stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            sh 'mvn clean verify sonar:sonar'
         }
-
+    }
+}
         stage('Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
