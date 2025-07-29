@@ -32,10 +32,10 @@ pipeline {
                 bat 'mvn clean install'
             }
         }
-      stage('SonarQube Analysis') {
+stage('SonarQube Analysis') {
     steps {
         withSonarQubeEnv('SonarQube') {
-            sh 'mvn clean verify sonar:sonar'
+            bat 'mvn clean verify sonar:sonar'
         }
     }
 }
