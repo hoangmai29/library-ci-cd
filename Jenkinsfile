@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven' // Đặt tên như bạn cài trong Jenkins
-        jdk 'JDK17'   // Đặt theo tên JDK bạn khai báo
+        maven 'Maven 3.9.6' // Hoặc tên cấu hình Maven bạn đã khai báo trong Jenkins
+        jdk 'JDK 17'         // Hoặc JDK bạn đã setup trong Jenkins
     }
 
     environment {
-        SONARQUBE = 'SonarQube' // Tên SonarQube server trong Jenkins
+        SONARQUBE = 'SonarQube' // Tên cấu hình SonarQube bạn đã khai trong Jenkins
     }
 
     stages {
@@ -17,30 +17,25 @@ pipeline {
             }
         }
 
-stage('Build') {
-    steps {
-        bat 'mvn clean install'
-    }
-}
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=library-ci-cd -Dsonar.host.url=http://localhost:9000 -Dsonar.login=your_token'
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Quality Gate') {
             steps {
-                sh 'docker build -t hoangmai29/library-ci-cd:latest .'
-                sh 'docker push hoangmai29/library-ci-cd:latest'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh 'ssh user@your-server "docker pull hoangmai29/library-ci-cd:latest && docker-compose up -d"'
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
     }
