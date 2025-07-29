@@ -1,0 +1,54 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1540.v295eccc9778f">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4169.vb_7e492a_1c7b_e">
+    <script>pipeline {
+    agent any
+
+    stages {
+        stage(&apos;Clone code&apos;) {
+            steps {
+                git &apos;https://github.com/hoangmai29/library-ci-cd.git&apos;
+            }
+        }
+
+        stage(&apos;Build with Maven&apos;) {
+            steps {
+                sh &apos;mvn clean install&apos;
+            }
+        }
+
+        stage(&apos;Code Quality - SonarQube&apos;) {
+            steps {
+                withSonarQubeEnv(&apos;MySonarQube&apos;) {
+                    sh &apos;mvn sonar:sonar&apos;
+                }
+            }
+        }
+
+        stage(&apos;Docker Build&apos;) {
+            steps {
+                sh &apos;docker build -t library-ci-cd .&apos;
+            }
+        }
+
+        stage(&apos;Deploy via SSH&apos;) {
+            steps {
+                sshagent([&apos;jenkins-ssh-key&apos;]) {
+                    sh &apos;scp target/*.jar user@your-server:/opt/app/&apos;
+                    sh &apos;ssh user@your-server &quot;bash /opt/app/restart.sh&quot;&apos;
+                }
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <authToken>my-token</authToken>
+  <disabled>false</disabled>
+</flow-definition>
