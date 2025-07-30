@@ -1,6 +1,18 @@
 version: '3.8'
+
 services:
   library:
-    build: .
+    container_name: library-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: library-app
     ports:
-      - "8080:8080"
+      - "9090:8080"  # truy cập app tại localhost:9090
+    restart: always
+    networks:
+      - library-network
+
+networks:
+  library-network:
+    driver: bridge
