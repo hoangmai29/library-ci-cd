@@ -15,7 +15,7 @@ pipeline {
 
         stage('Build & SonarQube') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'mysonar-token', variable: 'SONAR_TOKEN')]) {
                     bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" clean verify sonar:sonar -Dsonar.projectKey=library-ci-cd -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%SONAR_TOKEN%"
                 }
             }
@@ -31,7 +31,10 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            junit 'target/surefire-reports/*.xml'
+
+            // Nếu bạn chưa có test, có thể tạm comment dòng này
+            // Nếu bạn có test thì giữ nguyên
+            // junit 'target/surefire-reports/*.xml'
         }
         success {
             echo '✅ Build succeeded!'
