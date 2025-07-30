@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = tool 'Maven 3.8.6'           // Đúng tên Maven đã cài trong Jenkins
-        JAVA_HOME = tool 'JDK 17'                 // Tên bạn đã cấu hình trong Jenkins, trỏ tới: C:\Program Files\Java\jdk-17
+        MAVEN_HOME = tool 'Maven 3.8.6'           // Tên Maven trong Jenkins
+        JAVA_HOME = tool 'JDK 17'                 // Trỏ đến: C:\Program Files\Java\jdk-17
         PATH = "${JAVA_HOME}\\bin;${env.PATH}"    // Đảm bảo gọi được java
     }
 
@@ -32,6 +32,23 @@ pipeline {
         stage('Package') {
             steps {
                 bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" package"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t library-app .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                // Stop and remove old container if exists (optional safety)
+                bat 'docker stop library-container || echo "No running container"'
+                bat 'docker rm library-container || echo "No existing container"'
+
+                // Run new container
+                bat 'docker run -d -p 9090:8080 --name library-container library-app'
             }
         }
     }
