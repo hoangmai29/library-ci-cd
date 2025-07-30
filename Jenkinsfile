@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = tool 'Maven 3.8.6'
-        JAVA_HOME = tool 'JDK 1.8'
+        MAVEN_HOME = tool 'Maven 3.8.6'    // Đúng tên Maven đã cấu hình trong Jenkins
+        JAVA_HOME = tool 'JDK 17'          // Tên JDK đã cấu hình với đường dẫn: C:\Program Files\Java\jdk-17
+        PATH = "${JAVA_HOME}\\bin;${env.PATH}" // Đảm bảo Java có thể được gọi
     }
 
     stages {
@@ -31,10 +32,7 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-
-            // Nếu bạn chưa có test, có thể tạm comment dòng này
-            // Nếu bạn có test thì giữ nguyên
-            // junit 'target/surefire-reports/*.xml'
+            junit 'target/surefire-reports/*.xml'
         }
         success {
             echo '✅ Build succeeded!'
