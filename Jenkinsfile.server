@@ -1,0 +1,13 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Deploy to Server') {
+            steps {
+                sshagent(['my-ssh-credentials']) {
+                    sh 'ssh user@your-server-ip "cd /app && git pull && docker-compose down && docker-compose up -d --build"'
+                }
+            }
+        }
+    }
+}
