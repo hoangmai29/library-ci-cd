@@ -2,12 +2,19 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = tool 'Maven 3.8.6'    // Đúng tên Maven đã cấu hình trong Jenkins
-        JAVA_HOME = tool 'JDK 17'          // Tên JDK đã cấu hình với đường dẫn: C:\Program Files\Java\jdk-17
-        PATH = "${JAVA_HOME}\\bin;${env.PATH}" // Đảm bảo Java có thể được gọi
+        MAVEN_HOME = tool 'Maven 3.8.6'           // Đúng tên Maven đã cài trong Jenkins
+        JAVA_HOME = tool 'JDK 17'                 // Tên bạn đã cấu hình trong Jenkins, trỏ tới: C:\Program Files\Java\jdk-17
+        PATH = "${JAVA_HOME}\\bin;${env.PATH}"    // Đảm bảo gọi được java
     }
 
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()  // Xoá toàn bộ file trong workspace Jenkins
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -34,9 +41,11 @@ pipeline {
             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             junit 'target/surefire-reports/*.xml'
         }
+
         success {
             echo '✅ Build succeeded!'
         }
+
         failure {
             echo '❌ Build failed!'
         }
