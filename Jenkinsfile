@@ -1,39 +1,43 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven 3.9.6'  // Đặt đúng tên Maven bạn đã khai báo trong Jenkins
-        jdk 'jdk-17'         // Hoặc jdk-21 tùy bạn đã cài
-    }
-
     environment {
-        GIT_REPO = 'https://github.com/hoangmai29/library-ci-cd.git'
+        MAVEN_HOME = tool 'Maven 3.8.6'
+        JAVA_HOME = tool 'JDK 1.8'
     }
 
     stages {
-        stage('Clone') {
+        stage('Checkout') {
             steps {
-                git "${env.GIT_REPO}"
+                checkout scm
             }
         }
 
         stage('Build & SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    bat '''
-                        mvn clean verify sonar:sonar ^
-                        -Dsonar.projectKey=library-ci-cd ^
-                        -Dsonar.host.url=%SONAR_HOST_URL% ^
-                        -Dsonar.login=%SONAR_AUTH_TOKEN%
-                    '''
+                withCredentials([string(credentialsId: 'sonar-token-id', variable: 'SONAR_TOKEN')]) {
+                    bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" clean verify sonar:sonar -Dsonar.projectKey=library-ci-cd -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%SONAR_TOKEN%"
                 }
             }
         }
 
         stage('Package') {
             steps {
-                bat 'mvn package'
+                bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" package"
             }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            junit 'target/surefire-reports/*.xml'
+        }
+        success {
+            echo '✅ Build succeeded!'
+        }
+        failure {
+            echo '❌ Build failed!'
         }
     }
 }
