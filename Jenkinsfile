@@ -2,79 +2,37 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'     // Kiểm tra tên đã khai báo trong Jenkins Global Tool
-        jdk 'JDK17'       // Tên JDK đúng với Jenkins config
+        maven 'Maven 3.9.6'  // Đặt đúng tên Maven bạn đã khai báo trong Jenkins
+        jdk 'jdk-17'         // Hoặc jdk-21 tùy bạn đã cài
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonarqube-token') // Đảm bảo đã tạo với ID này
+        GIT_REPO = 'https://github.com/hoangmai29/library-ci-cd.git'
     }
 
     stages {
-        stage('Checkout Source') {
+        stage('Clone') {
             steps {
-                checkout scm
+                git "${env.GIT_REPO}"
             }
         }
 
-        stage('Build') {
+        stage('Build & SonarQube') {
             steps {
-                bat 'mvn clean install'
-            }
-        }
-
-withSonarQubeEnv('SonarQube') {
-    bat '''
-        mvn clean verify sonar:sonar ^
-        -Dsonar.projectKey=library-ci-cd ^
-        -Dsonar.host.url=%SONAR_HOST_URL% ^
-        -Dsonar.login=%SONAR_AUTH_TOKEN%
-    '''
-}
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                withSonarQubeEnv('SonarQube') {
+                    bat '''
+                        mvn clean verify sonar:sonar ^
+                        -Dsonar.projectKey=library-ci-cd ^
+                        -Dsonar.host.url=%SONAR_HOST_URL% ^
+                        -Dsonar.login=%SONAR_AUTH_TOKEN%
+                    '''
                 }
             }
         }
 
-        stage('Docker Build') {
+        stage('Package') {
             steps {
-                bat 'docker build -t library-app .'
-            }
-        }
-
-        stage('Docker Compose Deploy') {
-            steps {
-                bat 'docker-compose down || exit 0'
-                bat 'docker-compose up -d'
-            }
-        }
-
-        stage('SSH Deploy to Remote Server') {
-            steps {
-                sshPublisher(
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'deploy-server',
-                            transfers: [
-                                sshTransfer(
-                                    sourceFiles: '**/*',
-                                    removePrefix: '',
-                                    remoteDirectory: '/home/ubuntu/deploy',
-                                    execCommand: '''
-                                        cd /home/ubuntu/deploy
-                                        docker-compose down || true
-                                        docker-compose up -d
-                                    '''
-                                )
-                            ],
-                            usePromotionTimestamp: false,
-                            verbose: true
-                        )
-                    ]
-                )
+                bat 'mvn package'
             }
         }
     }
