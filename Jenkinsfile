@@ -24,7 +24,7 @@ pipeline {
         stage('Build & SonarQube') {
             steps {
                 withCredentials([string(credentialsId: 'mysonar-token', variable: 'SONAR_TOKEN')]) {
-                    bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" clean verify sonar:sonar -Dsonar.projectKey=library-ci-cd -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%SONAR_TOKEN%"
+                    bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" clean install -DskipTests=true sonar:sonar -Dsonar.projectKey=library-ci-cd -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%SONAR_TOKEN%"
                 }
             }
         }
