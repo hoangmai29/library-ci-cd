@@ -2,18 +2,18 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'     // Đảm bảo tên này khớp với cấu hình Global Tool trong Jenkins
-        jdk 'JDK17'       // Kiểm tra lại tên JDK đã khai báo trong Jenkins Global Tool
+        maven 'Maven'     // Kiểm tra tên đã khai báo trong Jenkins Global Tool
+        jdk 'JDK17'       // Tên JDK đúng với Jenkins config
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonarqube-token') // Phải tạo Credentials ID này trong Jenkins trước
+        SONAR_TOKEN = credentials('sonarqube-token') // Đảm bảo đã tạo với ID này
     }
 
     stages {
         stage('Checkout Source') {
             steps {
-                checkout scm // Nếu bạn đang dùng multibranch pipeline hoặc SCM đã cấu hình sẵn
+                checkout scm
             }
         }
 
@@ -26,7 +26,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    bat "mvn clean verify sonar:sonar -Dsonar.token=${SONAR_TOKEN}"
+                    bat """
+                        mvn clean verify sonar:sonar ^
+                        -Dsonar.projectKey=library-ci-cd ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.login=${SONAR_TOKEN}
+                    """
                 }
             }
         }
@@ -47,7 +52,7 @@ pipeline {
 
         stage('Docker Compose Deploy') {
             steps {
-                bat 'docker-compose down || exit 0' // Tắt container cũ nếu đang chạy
+                bat 'docker-compose down || exit 0'
                 bat 'docker-compose up -d'
             }
         }
@@ -57,7 +62,7 @@ pipeline {
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
-                            configName: 'deploy-server', // Đặt đúng tên cấu hình trong Jenkins > Configure System > Publish Over SSH
+                            configName: 'deploy-server',
                             transfers: [
                                 sshTransfer(
                                     sourceFiles: '**/*',
