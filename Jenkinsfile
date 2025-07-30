@@ -1,10 +1,11 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven 3.9.6'   // Đúng tên bạn đã cấu hình trong Jenkins
-        jdk 'JDK 17'          // Đúng tên đã khai báo trong Jenkins
-    }
+tools {
+    maven 'Maven'
+    jdk 'JDK17'
+}
+
 
     environment {
         SONAR_TOKEN = credentials('sonarqube-token')
