@@ -3,6 +3,7 @@ package com.example.library.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "books") // tránh trùng tên nếu có bảng hệ thống tên "book"
 public class Book {
 
     @Id
@@ -12,10 +13,11 @@ public class Book {
     private String title;
     private String author;
     private String isbn;
-    private String category; // thêm
-    private int year;        // thêm
+    private String category;
+    private int year;
 
     public Book() {
+        // no-arg constructor for JPA
     }
 
     public Book(String title, String author, String isbn, String category, int year) {
@@ -26,7 +28,7 @@ public class Book {
         this.year = year;
     }
 
-    // Getters and setters
+    // Getters & Setters
     public Long getId() {
         return id;
     }
