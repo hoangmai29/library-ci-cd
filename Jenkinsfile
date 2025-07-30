@@ -23,20 +23,14 @@ pipeline {
             }
         }
 
-stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('SonarQube') {
-            bat '''
-                mvn clean verify sonar:sonar ^
-                -Dsonar.projectKey=library-ci-cd ^
-                -Dsonar.host.url=%SONAR_HOST_URL% ^
-                -Dsonar.login=%SONAR_AUTH_TOKEN%
-            '''
-        }
-    }
+withSonarQubeEnv('SonarQube') {
+    bat '''
+        mvn clean verify sonar:sonar ^
+        -Dsonar.projectKey=library-ci-cd ^
+        -Dsonar.host.url=%SONAR_HOST_URL% ^
+        -Dsonar.login=%SONAR_AUTH_TOKEN%
+    '''
 }
-
-
         stage('Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
