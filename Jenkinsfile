@@ -43,12 +43,20 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                // Stop and remove old container if exists (optional safety)
+                // Stop and remove old container if exists
                 bat 'docker stop library-container || echo "No running container"'
                 bat 'docker rm library-container || echo "No existing container"'
 
                 // Run new container
                 bat 'docker run -d -p 9090:8080 --name library-container library-app'
+            }
+        }
+
+        stage('Deploy to Server') {
+            steps {
+                sshagent(credentials: ['my-ssh-credentials']) {
+                    sh 'ssh user@server "cd /app && docker-compose down && git pull && docker-compose up -d --build"'
+                }
             }
         }
     }
