@@ -1,18 +1,24 @@
 pipeline {
     agent any
 
+    environment {
+        SERVER_USER = "user"
+        SERVER_IP = "101.99.23.125"
+        PROJECT_PATH = "/home/user/library-ci-cd"
+    }
+
     stages {
-        stage('Deploy to Server') {
+        stage('Deploy to Server via SSH') {
             steps {
                 sshagent(credentials: ['my-ssh-credentials']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no user@101.99.23.125 '
-                            cd /home/user/library-ci-cd &&
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} '
+                            cd ${PROJECT_PATH} &&
                             git pull &&
-                            docker-compose down &&
-                            docker-compose up -d --build
+                            docker compose down &&
+                            docker compose up -d --build
                         '
-                    '''
+                    """
                 }
             }
         }
