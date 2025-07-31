@@ -4,8 +4,15 @@ pipeline {
     stages {
         stage('Deploy to Server') {
             steps {
-                sshagent(['my-ssh-credentials']) {
-                    sh 'ssh user@your-server-ip "cd /app && git pull && docker-compose down && docker-compose up -d --build"'
+                sshagent(credentials: ['my-ssh-credentials']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no user@101.99.23.125 '
+                            cd /home/user/library-ci-cd &&
+                            git pull &&
+                            docker-compose down &&
+                            docker-compose up -d --build
+                        '
+                    '''
                 }
             }
         }
