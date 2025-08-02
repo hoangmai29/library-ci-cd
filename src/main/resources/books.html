@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Book Management</title>
+    <script>
+        async function loadBooks() {
+            const res = await fetch("http://localhost:9090/api/books");
+            const books = await res.json();
+            const tbody = document.getElementById("bookTable");
+            tbody.innerHTML = "";
+
+            books.forEach(book => {
+                const row = `
+                    <tr>
+                        <td>${book.id}</td>
+                        <td>${book.title}</td>
+                        <td>${book.author}</td>
+                        <td>${book.category}</td>
+                        <td>${book.year}</td>
+                        <td>
+                            <button onclick="deleteBook(${book.id})">Delete</button>
+                        </td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function addBook() {
+            const title = document.getElementById("title").value;
+            const author = document.getElementById("author").value;
+            const category = document.getElementById("category").value;
+            const year = document.getElementById("year").value;
+
+            await fetch("http://localhost:9090/api/books", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, author, category, year })
+            });
+
+            loadBooks();
+        }
+
+        async function deleteBook(id) {
+            await fetch(`http://localhost:9090/api/books/${id}`, {
+                method: "DELETE"
+            });
+            loadBooks();
+        }
+
+        window.onload = loadBooks;
+    </script>
+</head>
+<body>
+    <h2>Library Book Management</h2>
+
+    <h3>Add New Book</h3>
+    <input id="title" placeholder="Title"/>
+    <input id="author" placeholder="Author"/>
+    <input id="category" placeholder="Category"/>
+    <input id="year" type="number" placeholder="Year"/>
+    <button onclick="addBook()">Add Book</button>
+
+    <h3>All Books</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th><th>Title</th><th>Author</th><th>Category</th><th>Year</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="bookTable">
+        </tbody>
+    </table>
+</body>
+</html>
