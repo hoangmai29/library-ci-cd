@@ -1,13 +1,13 @@
 package com.example.library;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@Controller  // Chú ý thay @RestController thành @Controller
 public class HelloController {
 
     @GetMapping("/")
     public String hello() {
-        return "Library App is running!";
+        return "index";  // Tên file index.html trong thư mục templates
     }
 }
